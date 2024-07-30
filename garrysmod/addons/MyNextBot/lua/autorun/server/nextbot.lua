@@ -12,6 +12,9 @@ ENT.Type = "nextbot"
 ENT.PrintName = "My NextBot"
 ENT.Category = "MyNextBot"
 
+ENT.Model = "models/"
+ENT.SoundPath = "sound/"
+
 
 function ENT:Initialize()
     self:SetModel(self.Model)
@@ -19,3 +22,46 @@ function ENT:Initialize()
 
     self:EmitSound(self.SoundPath)
 end
+
+function ENT:Think()
+    local players = player.GetAll()
+    local closestPlayer = nil
+    local closestDistance = 999999
+
+    for _, ply in inpairs(players) do
+        if IsValid(ply) and ply:Alive() then
+            local distance = self:GetPos():DistToSqr(ply:GetPos())
+            if distance < closestDistance then
+                closestDistance = distance
+                closestPlayer = ply
+            end
+        end
+    end
+
+    if closestPlayer then
+        local targetPos = closestPlayer:GetPos()
+        local direction = (targetPos - self:GetPos()):GetNormalized()
+        self:SetPos(self:GetPos() + direction * 5)
+        self:SalAngles(direction:Angle())
+    end
+
+    self:NextThink(CurTime())
+    return true
+end
+
+function ENT:OnTouch(ent)
+    if ent:IsPlayer() and ent:Alive() then
+        ent:Kill() -- Instantly kill the player
+
+        -- Optionally play a sound on touch
+        self:EmitSound("ambient/levels/labs/electric_explosion1.wav") -- Change this to your touch sound
+    end
+end
+
+-- Make the NextBot immortal
+function ENT:OnTakeDamage(dmginfo)
+    -- Prevent any damage from affecting the NextBot
+end
+
+-- Register the NextBot entity
+scripted_ents.Register(ENT, "chasing_nextbot")
